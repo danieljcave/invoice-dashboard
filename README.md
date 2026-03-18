@@ -78,8 +78,45 @@ Then open:
 
 <details>
         <summary>Click to Open to view Screenshots</summary>
-        <br>
+        <br></br>
+        <p><b>Welcome Page</b></p>
         <img src="/screenshots/welcome_page.png">
+        <br></br>
+        <p><b>Invoice Dashboard</b></p>
+        <img src="/screenshots/invoice_dashboard.png">
+        <br></br>
+        <p><b>Invoice Detail</b></p>
+        <img src="/screenshots/invoice_detail.png">
+        <br></br>
+        <p><br>Invoice Edit</br></p>
+        <img src="/screenshots/invoice_edit.png">
+        <br></br>
+        <p><b>Invoice Delete</b></p>
+        <img src="/screenshots/invoice_delete.png">
+        <br></br>
+        <p><b>Client Dashboard</b></p>
+        <img src="/screenshots/client_dashboard.png">
+        <br></br>
+        <p><b>Client Edit</b></p>
+        <img src="/screenshots/client_edit.png">
+        <br></br>
+        <p><b>Client Delete</b></p>
+        <img src="/screenshots/client_delete.png">
+        <br></br>
+        <p><b>Dog Dashboard</b></p>
+        <img src="/screenshots/dog_dashboard.png">
+        <br></br>
+        <p><b>Dog Edit</b></p>
+        <img src="/screenshots/dog_edit.png">
+        <br></br>
+        <p><b>Dog Delete</b></p>
+        <img src="/screenshots/dog_delete.png">
+        <br></br>
+        <p><b>Dog Walks Counter</b></p>
+        <img src="/screenshots/dog_walk_counter.png">
+        <br></br>
+        <p><b>Invoice PDF</b></p>
+        <img src="/screenshots/pdf_view.png">
     </details>
 
 ## 💡 Project Purpose
