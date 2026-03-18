@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice {{ invoice.invoice_number }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .header img {
+            max-width: 250px;
+            margin-bottom: 10px;
+        }
+        .title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0;
+        }
+        .title-left {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: left;
+        }
+        .title-right {
+            text-align: right;
+            white-space: nowrap;
+        }
+        .title-right h2 {
+            margin: 0;
+        }
+        .date-right{
+            text-align: right;
+            margin: 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .address-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+        .address-column {
+            width: 45%;
+        }
+        .bill-to {
+            margin-left: 100px;
+        }
+        .line-items {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .line-items th, .line-items td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .line-items th {
+            background-color: #f2f2f2;
+            text-align: center;
+        }
+        .line-items th.description, .line-items td.description {
+            width: 50%;
+        }
+        .line-items th.qty, .line-items td.qty {
+            width: 10%;
+        }
+        .line-items th.unit-price, .line-items td.unit-price,
+        .line-items th.amount, .line-items td.amount {
+            width: 20%;
+        }
+        .total {
+            text-align: right;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .contact-info {
+            margin-top: 20px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <div class="header">
+        <!-- Centered Logo -->
+        {% if encoded_logo %}
+            <img src="data:image/png;base64,{{ encoded_logo }}" alt="4 Paws n 2 Feet Logo">
+        {% endif %}
+    </div>
+
+    <!-- Title Row -->
+    <div class="title-row">
+        <div class="title-left">
+            Company Name Here
+        </div>
+        <!-- Right Side: Invoice Details -->
+        <div class="title-right">
+            <h2>INVOICE #{{ invoice.invoice_number }}</h2>
+        </div>
+    </div>
+    <div class="date-right">
+        <p>Date: {{ invoice.due_date|date:"d/m/Y" }}</p>
+    </div>
+
+    <!-- Address Section -->
+    <div class="address-section">
+        <div class="address-column">
+            <h3>Sent From:</h3>
+            <p>Company Name<br>
+               House Name<br>
+               Street Name<br>
+               Town<br>
+               City Name<br>
+               Postcode</p>
+        </div>
+        <div class="address-column">
+            <div class="bill-to">
+                <h3>Bill To:</h3>
+                <p>{{ invoice.client.name }}<br>
+                   {{ invoice.client.address_line1 }}<br>
+                   {% if invoice.client.address_line2 %}{{ invoice.client.address_line2 }}<br>{% endif %}
+                   {{ invoice.client.city }}<br>
+                   {{ invoice.client.region }}<br>
+                   {{ invoice.client.postcode }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Line Items Section -->
+    <table class="line-items">
+        <thead>
+            <tr>
+                <th class="description">Description</th>
+                <th class="qty">Qty</th>
+                <th class="unit-price">Unit Price (£)</th>
+                <th class="amount">Amount (£)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.line_items.all %}
+            <tr>
+                <td class="description">
+                    {{ item.dog.name }} - 
+                    {% if item.custom_service %}
+                        {{ item.custom_service }}
+                    {% else %}
+                        {{ item.service }}
+                    {% endif %}
+                </td>
+                <td class="qty">{{ item.quantity }}</td>
+                <td class="unit-price">{{ item.unit_price }}</td>
+                <td class="amount">{{ item.line_total }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Total Section -->
+    <div class="total">
+        <p>Total: £{{ invoice.total_amount }}</p>
+    </div>
+
+    <!-- Footer Section -->
+    <div class="footer">
+        <p>Account Name: <strong>Daniel Cave</strong><br>
+        Sort Code: <strong>00-00-00</strong><br>
+        Account Number: <strong>12345678</strong></p>
+        <p class="contact-info">
+            If you have any questions about this invoice, please contact:<br>
+            Daniel Cave, 01234 567890, info@dogwalking.o.uk
+        </p>
+        <p><strong>Thank you for your business!</strong></p>
+        <p><strong>Terms of Receipt:</strong> Due within 7 days of issue</p>
+    </div>
+</body>
+</html>

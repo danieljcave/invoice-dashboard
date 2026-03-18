@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Dog Walk Counter</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Weekly Walks</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dog in dogs %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ dog.name }}</td>
+                <td id="walks-{{ dog.id }}">{{ dog.weekly_walks }}</td>
+                <td>
+                    <button class="btn btn-success btn-sm increment-btn" data-dog-id="{{ dog.id }}">+</button>
+                    <button class="btn btn-danger btn-sm decrement-btn" data-dog-id="{{ dog.id }}">-</button>
+                    <input type="number" class="form-control d-inline-block manual-input" style="width: 60px;" data-dog-id="{{ dog.id }}" value="{{ dog.weekly_walks }}">
+                    <button class="btn btn-primary btn-sm manual-btn" data-dog-id="{{ dog.id }}">Set</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <button class="btn btn-warning mt-4 reset-all-btn">Reset All Walks</button>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const csrfToken = '{{ csrf_token }}';
+
+        // Increment Button
+        document.querySelectorAll(".increment-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                const dogId = this.getAttribute("data-dog-id");
+                updateWalks(dogId, "increment");
+            });
+        });
+
+        // Decrement Button
+        document.querySelectorAll(".decrement-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                const dogId = this.getAttribute("data-dog-id");
+                updateWalks(dogId, "decrement");
+            });
+        });
+
+        // Manual Set Button
+        document.querySelectorAll(".manual-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                const dogId = this.getAttribute("data-dog-id");
+                const inputField = document.querySelector(`.manual-input[data-dog-id='${dogId}']`);
+                const value = inputField.value;
+                updateWalks(dogId, "manual", value);
+            });
+        });
+
+        // Reset All Button
+        document.querySelector(".reset-all-btn").addEventListener("click", () => {
+            if (confirm("Are you sure you want to reset all weekly walks?")) {
+                fetch(window.location.href, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken,
+                    },
+                    body: JSON.stringify({ action: "reset" }),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Reset all walk counts to 0 in the UI
+                            document.querySelectorAll("[id^='walks-']").forEach(element => {
+                                element.textContent = "0";
+                            });
+                            document.querySelectorAll(".manual-input").forEach(input => {
+                                input.value = "0";
+                            });
+                        } else {
+                            alert(data.error || "An error occurred.");
+                        }
+                    })
+                    .catch(error => console.error("Error:", error));
+            }
+        });
+
+        // Function to handle AJAX requests for updating walks
+        function updateWalks(dogId, action, value = null) {
+            fetch(window.location.href, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                body: JSON.stringify({ action, dog_id: dogId, value }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                        // Update the displayed walk count
+                        const walksElement = document.getElementById(`walks-${dogId}`);
+                        const inputField = document.querySelector(`.manual-input[data-dog-id='${dogId}']`);
+                        if (action !== "manual") {
+                            walksElement.textContent = data.weekly_walks;
+                            inputField.value = data.weekly_walks; // Sync input field
+                        } else {
+                            walksElement.textContent = value;
+                        }
+                    } else {
+                        alert(data.error || "An error occurred.");
+                    }
+                })
+                .catch((error) => console.error("Error:", error));
+        }
+    });
+</script>
+{% endblock %}

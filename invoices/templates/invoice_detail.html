@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice Detail</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .invoice-list {
+            margin-top: 10px;
+        }
+        .line-items {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .line-items th, .line-items td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .line-items th {
+            background-color: #f2f2f2;
+            text-align: center;
+        }
+        .line-items th.description, .line-items td.description {
+            width: 50%;
+        }
+        .line-items th.qty, .line-items td.qty {
+            width: 10%;
+        }
+        .line-items th.unit-price, .line-items td.unit-price,
+        .line-items th.amount, .line-items td.amount {
+            width: 20%;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg bg-transparent">
+    <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}">
+            <img src="{% static 'images/favicon.png' %}" alt="Logo" width="40" height="35" class="me-2">
+            <span>Welcome Dan</span>
+        </a>
+
+        <!-- Navbar Toggler Button (for mobile view) -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Collapsible Menu -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'invoices:client_list' %}">Clients</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'invoices:dog_list' %}">Dogs</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'invoices:counter' %}">Counter</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+    <div class="container mt-4">
+        <h1>Invoice #{{ invoice.invoice_number }}</h1>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        <div class="invoice-list">
+            <p><strong>Client:</strong> {{ invoice.client.name }}</p>
+            <p><strong>Address:</strong><br>
+                {{ invoice.client.address_line1 }}<br>
+                {% if invoice.client.address_line2 %}{{ invoice.client.address_line2 }}<br>{% endif %}
+                {{ invoice.client.city }}<br>
+                {{ invoice.client.region }}<br>
+                {{ invoice.client.postcode }}
+            </p>
+            <p><strong>Date Created:</strong> {{ invoice.date_created|date:"d/m/Y" }}</p>
+            <p><strong>Due Date:</strong> {{ invoice.due_date|date:"d/m/Y" }}</p>
+
+            <table class="line-items">
+                <thead>
+                    <tr>
+                        <th class="description">Description</th>
+                        <th class="qty">Qty</th>
+                        <th class="unit-price">Unit Price (£)</th>
+                        <th class="amount">Amount (£)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice.line_items.all %}
+                    <tr>
+                        <td class="description">
+                            {{ item.dog.name }} - 
+                            {% if item.custom_service %}
+                                {{ item.custom_service }}
+                            {% else %}
+                                {{ item.service }}
+                            {% endif %}
+                        </td>
+                        <td class="qty">{{ item.quantity }}</td>
+                        <td class="unit-price">{{ item.unit_price }}</td>
+                        <td class="amount">{{ item.line_total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p><strong>Total Amount:</strong> £{{ invoice.total_amount }}</p>
+
+            <a href="{% url 'invoices:view_invoice_pdf' invoice.id %}" target="_blank" class="btn btn-info btn-sm">View PDF</a>
+            <a href="{% url 'invoices:generate_invoice_pdf' invoice.id %}" class="btn btn-primary btn-sm">Download PDF</a>
+            <a href="{% url 'invoices:send_invoice_email' invoice.id %}" class="btn btn-success btn-sm">Send Email</a>
+            <br>
+            <!-- Horizontal line -->
+            <hr>
+            <a href="{% url 'invoices:edit_invoice' invoice.id %}" class="btn btn-warning btn-sm">Edit</a>
+            <a href="{% url 'invoices:invoice_delete' invoice.id %}" class="btn btn-danger btn-sm">Delete</a>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const alertElement = document.querySelector('.alert-fixed');
+            if (alertElement) {
+                setTimeout(() => {
+                    alertElement.style.opacity = '0';
+                    setTimeout(() => {
+                        alertElement.remove();
+                    }, 500);
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

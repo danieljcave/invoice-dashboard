@@ -1,0 +1,219 @@
+{% load static crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Invoice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .line-item-table {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .line-item-table th, .line-item-table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .line-item-actions {
+            width: 5%;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg bg-transparent">
+    <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}">
+            <img src="{% static 'images/favicon.png' %}" alt="Logo" width="40" height="35" class="me-2">
+            <span>Welcome Dan</span>
+        </a>
+
+        <!-- Navbar Toggler Button (for mobile view) -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Collapsible Menu -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'invoices:client_list' %}">Clients</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'invoices:dog_list' %}">Dogs</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'invoices:counter' %}">Counter</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+    <div class="container mt-4">
+        <h1>Create Invoice</h1>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        {{ invoice_form.client|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ invoice_form.due_date|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h4>Line Items</h4>
+                {{ formset.management_form }}
+                <table class="table table-bordered line-item-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Dog</th>
+                            <th>Service</th>
+                            <th>Quantity</th>
+                            <th>Unit Price (£)</th>
+                            <th class="line-item-actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="line-items-container">
+                        {% for form in formset %}
+                            <tr>
+                                <td>
+                                    {{ form.dog|as_crispy_field }}
+                                </td>
+                                <td>
+                                    {{ form.service|as_crispy_field }}
+                                </td>
+                                <td>
+                                    {{ form.quantity|as_crispy_field }}
+                                </td>
+                                <td>
+                                    {{ form.unit_price|as_crispy_field }}
+                                </td>
+                                <td class="line-item-actions">
+                                    <button type="button" class="btn btn-danger btn-sm remove-line-item">Remove</button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="button" id="add-line-item" class="btn btn-secondary mt-2">Add Line Item</button>
+            </div>
+            <!-- Confirm Button -->
+            <div class="mt-4">
+                <button type="button" id="confirm-invoice" class="btn btn-warning">Click to Confirm</button>
+            </div>
+            <!-- Submit and Cancel Buttons -->
+            <div class="mt-4 mb-4">
+                <button type="submit" id="submit-invoice" class="btn btn-primary" disabled>Create Invoice</button>
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>          
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const servicePrices = {
+                "Group Walk": 15,
+                "Pet Visit": 11,
+                "Dog Sitting": 40,
+                "Late Cancellation": 15,
+            };
+    
+            const lineItemsContainer = document.getElementById('line-items-container');
+            const addLineItemButton = document.getElementById('add-line-item');
+            const confirmButton = document.getElementById('confirm-invoice');
+            const submitButton = document.getElementById('submit-invoice');
+    
+            // Disable the submit button initially
+            submitButton.disabled = true;
+    
+            // Enable the submit button when the confirm button is clicked
+            confirmButton.addEventListener('click', () => {
+                submitButton.disabled = false;
+                confirmButton.textContent = 'Confirmed';
+                confirmButton.classList.remove('btn-warning');
+                confirmButton.classList.add('btn-success');
+                confirmButton.disabled = true; // Prevent clicking multiple times
+            });
+    
+            // Update the unit price when the service changes
+            const updateUnitPrice = (row) => {
+                const serviceField = row.querySelector("select[name*='service']");
+                const unitPriceField = row.querySelector("input[name*='unit_price']");
+    
+                serviceField.addEventListener("change", () => {
+                    const selectedService = serviceField.value;
+                    if (selectedService in servicePrices) {
+                        unitPriceField.value = servicePrices[selectedService]; // Auto-set price
+                    } else {
+                        unitPriceField.value = 0; // Default to 0 if service doesn't match
+                    }
+                });
+            };
+    
+            // Add a new line item dynamically
+            addLineItemButton.addEventListener('click', () => {
+                const totalFormsInput = document.querySelector('#id_line_items-TOTAL_FORMS');
+                const totalForms = parseInt(totalFormsInput.value, 10);
+    
+                const emptyFormHtml = `
+                    <tr>
+                        ${lineItemsContainer.querySelector("tr").innerHTML.replace(/-0-/g, `-${totalForms}-`)}
+                    </tr>`;
+    
+                lineItemsContainer.insertAdjacentHTML('beforeend', emptyFormHtml);
+                totalFormsInput.value = totalForms + 1;
+    
+                const newRow = lineItemsContainer.lastElementChild;
+                attachHandlers(newRow);
+            });
+    
+            // Attach event handlers for rows
+            const attachHandlers = (row) => {
+                updateUnitPrice(row);
+    
+                const removeButton = row.querySelector(".remove-line-item");
+                removeButton.addEventListener("click", () => {
+                    row.remove();
+                    updateTotalFormsCount();
+                });
+            };
+    
+            // Update total forms count when rows are added or removed
+            const updateTotalFormsCount = () => {
+                const totalFormsInput = document.querySelector('#id_line_items-TOTAL_FORMS');
+                totalFormsInput.value = lineItemsContainer.querySelectorAll('tr').length;
+            };
+    
+            // Initialize handlers for existing rows
+            document.querySelectorAll("#line-items-container tr").forEach((row) => {
+                attachHandlers(row);
+                // Trigger a change event on load to set unit price for existing rows
+                const serviceField = row.querySelector("select[name*='service']");
+                if (serviceField) {
+                    serviceField.dispatchEvent(new Event('change'));
+                }
+            });
+    
+            // Ensure all fields are passed correctly on submission
+            const form = document.querySelector('form');
+            form.addEventListener('submit', () => {
+                document.querySelectorAll("#line-items-container tr").forEach((row) => {
+                    const serviceField = row.querySelector("select[name*='service']");
+                    const unitPriceField = row.querySelector("input[name*='unit_price']");
+    
+                    // Ensure unit price is set before submission
+                    const selectedService = serviceField.value;
+                    if ((!unitPriceField.value || unitPriceField.value === "0") && selectedService in servicePrices) {
+                        unitPriceField.value = servicePrices[selectedService];
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
