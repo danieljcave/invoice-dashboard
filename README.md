@@ -88,7 +88,7 @@ Then open:
         <p><b>Invoice Detail</b></p>
         <img src="/screenshots/invoice_detail.png">
         <br></br>
-        <p><br>Invoice Edit</br></p>
+        <p><b>Invoice Edit</b></p>
         <img src="/screenshots/invoice_edit.png">
         <br></br>
         <p><b>Invoice Delete</b></p>
